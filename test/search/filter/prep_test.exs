@@ -1,4 +1,4 @@
-defmodule Rivet.Test.Search.Filter.PrepTest do
+defmodule Rivet.Search.Test.Search.Filter.PrepTest do
   use Rivet.Test.Case, async: true
 
   defmodule TestSearch do

@@ -1,4 +1,4 @@
-defmodule Rivet.Test.Repo do
+defmodule Rivet.Search.Test.Repo do
   @moduledoc false
   use Ecto.Repo,
     otp_app: :rivet,

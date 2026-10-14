@@ -1,4 +1,4 @@
-defmodule Rivet.Test.Search.Filter.OrderTest do
+defmodule Rivet.Search.Test.Search.Filter.OrderTest do
   use Rivet.Test.Case, async: true
   import Ecto.Query
 

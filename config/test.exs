@@ -1,12 +1,12 @@
 import Config
 
-config :rivet, app: :rivet
+config :rivet, app: :rivet_search
 
-config :rivet, Rivet.Test.Repo,
+config :rivet_mailer, Rivet.Search.Test.Repo,
   pool_size: 20,
   username: "postgres",
   password: "",
-  database: "rivet_#{config_env()}",
+  database: "rivet_search_#{config_env()}",
   hostname: "localhost",
   log: false,
   pool: Ecto.Adapters.SQL.Sandbox

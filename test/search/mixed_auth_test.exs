@@ -1,4 +1,4 @@
-defmodule Rivet.Test.Search.MixedAuthTest do
+defmodule Rivet.Search.Test.Search.MixedAuthTest do
   use Rivet.Test.Case, async: true
   alias Rivet.Search.MixedAuth
 

@@ -1,4 +1,4 @@
-defmodule Rivet.Test.Search.TestTableTest do
+defmodule Rivet.Search.Test.Search.TestTableTest do
   use Rivet.Test.Case, async: true
   alias Rivet.TestTable.Search
 

@@ -1,4 +1,4 @@
-defmodule Rivet.Test.Case do
+defmodule Rivet.Search.Test.Case do
   use ExUnit.CaseTemplate
 
   using do

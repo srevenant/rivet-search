@@ -1,4 +1,4 @@
-defmodule Rivet.Test.Search.ValidateTest do
+defmodule Rivet.Search.Test.Search.ValidateTest do
   use Rivet.Test.Case, async: true
   alias Rivet.Search.Validate
 

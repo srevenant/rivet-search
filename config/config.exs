@@ -2,8 +2,8 @@ import Config
 
 config :logger, level: :info
 
-config :rivet, repo: Rivet.Test.Repo
-config :rivet_search, ecto_repos: [Rivet.Test.Repo]
+config :rivet, repo: Rivet.Search.Test.Repo
+config :rivet_search, ecto_repos: [Rivet.Search.Test.Repo]
 
 config :mix_test_watch,
   exclude: [

@@ -1,4 +1,4 @@
-defmodule Rivet.Test.Search.ToolsTest do
+defmodule Rivet.Search.Test.Search.ToolsTest do
   use Rivet.Test.Case, async: true
   import Ecto.Query
   alias Rivet.Search.Tools
@@ -10,7 +10,7 @@ defmodule Rivet.Test.Search.ToolsTest do
     use Ecto.Schema
 
     schema "tools_children" do
-      belongs_to(:parent, Rivet.Test.Search.ToolsTest.Parent)
+      belongs_to(:parent, Rivet.Search.Test.Search.ToolsTest.Parent)
     end
   end
 
@@ -18,7 +18,7 @@ defmodule Rivet.Test.Search.ToolsTest do
     use Ecto.Schema
 
     schema "tools_parents" do
-      has_many(:children, Rivet.Test.Search.ToolsTest.Child)
+      has_many(:children, Rivet.Search.Test.Search.ToolsTest.Child)
     end
   end
 

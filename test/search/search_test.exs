@@ -1,4 +1,4 @@
-defmodule Rivet.Test.Search.SearchTest do
+defmodule Rivet.Search.Test.Search.SearchTest do
   use Rivet.Test.Case, async: true
   import Ecto.Query
   alias __MODULE__.MockParent.TestSearch
