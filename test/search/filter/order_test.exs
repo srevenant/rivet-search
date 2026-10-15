@@ -1,5 +1,5 @@
 defmodule Rivet.Search.Test.Search.Filter.OrderTest do
-  use Rivet.Test.Case, async: true
+  use Rivet.Search.Test.Case, async: true
   import Ecto.Query
 
   alias Rivet.Search.Filter.{Order, Prep}

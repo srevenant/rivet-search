@@ -2,7 +2,7 @@ import Config
 
 config :rivet, app: :rivet_search
 
-config :rivet_mailer, Rivet.Search.Test.Repo,
+config :rivet_search, Rivet.Search.Test.Repo,
   pool_size: 20,
   username: "postgres",
   password: "",

@@ -6,17 +6,17 @@ defmodule Rivet.Search.Test.Case do
       import Ecto
       import Ecto.Changeset
       import Ecto.Query
-      import Rivet.Test.Case
+      import Rivet.Search.Test.Case
       alias Ecto.Changeset
     end
   end
 
   setup tags do
     opts = tags |> Map.take([:isolation]) |> Enum.to_list()
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Rivet.Test.Repo, opts)
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Rivet.Search.Test.Repo, opts)
 
     unless tags[:async] do
-      Ecto.Adapters.SQL.Sandbox.mode(Rivet.Test.Repo, {:shared, self()})
+      Ecto.Adapters.SQL.Sandbox.mode(Rivet.Search.Test.Repo, {:shared, self()})
     end
 
     :ok

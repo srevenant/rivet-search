@@ -42,39 +42,35 @@ defmodule Rivet.Search.MixedAuth do
   Both `authed_action` and `unauthed_action` accept the same formats:
 
   * `SearchModule` - Execute `SearchModule.search/2`.
-  * `fun/3` — Execute a `final_result_callback/3` without automatically running a search.
-  * `{SearchModule, fun/3}` — Execute a `continue_callback/3`, which may proceed to `SearchModule.search/2`.
+  * `fun/3` — Execute a [Final Result Callback](#module-result-callbacks). In this scenario there is no search run afterward.
+  * `{SearchModule, fun/3}` — Execute a [Continue Result Callback](#module-result-callbacks), which may proceed to `SearchModule.search/2`.
   * `{SearchModule, auth_opts}` — Adjust search arguments, then execute `SearchModule.search/2`.
-  * `{SearchModule, fun/3, auth_opts}` — Adjust arguments, then execute a `continue_callback/3` that may proceed to the search.
+  * `{SearchModule, fun/3, auth_opts}` — Adjust arguments, then execute a [Continue Result Callback](#module-result-callbacks). that may proceed to the search.
   * `:error` - Return `{:error, type}`
   * `{:error, reason}` - Return a formatted error using `Result.build_error/1`.
 
-  ### Argument Adjustments and `adjustment_callback/4`
+  ### Argument Adjustments
 
-  `auth_opts` is a keyword list supporting two optional keys: `:limit` and `:filter`. Each key accepts either a fixed replacement value or an `adjustment_callback/4` function to modify `user_args` dynamically.
+  `auth_opts` is a keyword list supporting two optional keys: `:limit` and `:filter`. Each key accepts either a fixed replacement value or an adjustment callback function to modify `user_args` dynamically.
 
-  The adjustment callback accepts arguments: `(user_args, auth_opts, runtime_opts, auth_type)`
+  The adjustment `callback/4` accepts arguments: `(user_args, auth_opts, runtime_opts, auth_type)`
 
   It must return the updated arguments map directly, not wrapped in a tuple.
 
-  ### `final_result_callback/3`
+  ### Result Callbacks
 
-  This callback accepts arguments: `(user_args, runtime_opts, auth_type)`
+  There are two types of result callbacks: Final and Continue. They accept the same arguments but the type determines what is allowed to be returned from them.
 
-  It must return one of the following, neither of which executes a search:
+  Input arguments are: `(user_args, runtime_opts, auth_type)`
+
+  Both Final and Continue may return:
 
   * `{:ok, status_result}` — A `Rivet.Search.Result.status_result()` response (which may include a success=false type error).
   * `{:error, reason}` — An top level failure error response.
 
-  ### `continue_callback/3`
-
-  This callback receives the same arguments as `final_result_callback/3` and supports the same final results.
-
-  Additionally, it may return:
+  However a Continue callback may also return this value which tells MultiAuth to continue and run the `SearchModule.search`:
 
   * `{:cont, args, opts}` — Continue execution with `SearchModule.search(args, opts)`.
-
-  This allows the callback to modify both search arguments and runtime options, or terminate early by returning a final result.
 
   ## Examples
 
@@ -178,7 +174,7 @@ defmodule Rivet.Search.MixedAuth do
           | :error
           | auth_error()
 
-  @type mixed_auth_final_result :: {:ok, Result.status_result()} | auth_error()
+  @type mixed_auth_final_result :: {:ok, Rivet.Search.Result.status_result()} | auth_error()
 
   @type mixed_auth_continue_result ::
           {:cont, user_args(), runtime_opts()}

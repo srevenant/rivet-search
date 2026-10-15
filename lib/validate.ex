@@ -10,7 +10,7 @@ defmodule Rivet.Search.Validate do
   """
 
   @builtin_types [:string, :glob, :uuid, :atom, :integer, :float, :date]
-  @schema_options [:type, :list, :key, :join, :prep, :order]
+  @scheme_options [:type, :list, :key, :join, :prep, :order]
   @search_options [:schema, :default_filters, :model, :soft_limit, :hard_limit]
 
   ##############################################################################
@@ -25,7 +25,7 @@ defmodule Rivet.Search.Validate do
       )
 
       opts = config_map!(raw_opts, "Search column #{inspect(name)}")
-      unknown = Map.keys(opts) -- @schema_options
+      unknown = Map.keys(opts) -- @scheme_options
 
       required!(unknown == [], "#{name}: unknown options #{inspect(unknown)}")
       validate_column!(name, opts)

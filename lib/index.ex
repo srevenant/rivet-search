@@ -1,210 +1,107 @@
 defmodule Rivet.Search do
   @moduledoc """
 
-  Search columns(filters) on tables with a dynamic ecto query builder system.
+  For an introduction and implementation guide, see the [Rivet.Search documentation](README.md).
 
-  See also:
-    - `Rivet.Search.MixedAuth`
-    - `Rivet.Search.Result`
-    - `Rivet.Search.Tools`
-    - `Rivet.Search.Pagination` (planned)
-
-  ## Using
-
-  Typical usage pattern:
-
-  ```elixir
-  defmodule MyApp.RivetModel.Search do
-    schema = [
-      status: [type: :atom, list: :in],
-      name: [type: :glob],
-      owner: [type: :glob, key: :name, join: &fjoin_to_owner/3],
-      inserted_at: [type: :date, order: :only],
-      updated_at: [type: :date, order: :only]
-    ]
-
-    default_filter = [[n: "name"]]
-
-    use Rivet.Search, schema: schema, default_filters: default_filters
-
-    @impl Rivet.Search
-    def filter_expr(:name, ..)
-
-  ```
-
-  This will generate a search function that supports a map with either `:filter` or `:id` as a key (filter taking priority).
-
-  Options you can give to the creation of a search model:
-
-    * `:schema` - REQUIRED (see SPEC/column schema).
-    * `:default_filters` - default filter set when no user-supplied filters are provided (infills missing columns too).
-    * `:soft_limit` - default=25 - this is the default result limit if there is not a user-supplied limit.
-    * `:hard_limit` - default=400 - this is the max a user-supplied limit can have.
-
-  ## Search Filters
-
-  a list of column filters are sent from the FE which determine the order plus
-  any filter arguments all at once. the order of each in the list defines
-  how to order the resulting columns as well.
-
-  Column filter sent from FE are single-letter keys (to keep it smaller):
-
-      'n' — column name  * required
-      'o' — order (a, d)   a=ascending, d=descending; default is `a`
-      'v' — [value,...]    Value used in filtering, as a list of strings.
-                           List is required even if only one element because
-                           of GraphQL only allowing for one type
-      'x' — operator       one of:
-
-            "is" equals, matching, or in a list (this is default if unspecified)
-            "no" not equals, matching, or not in list
-                 (note: the remaining only apply to numbers & dates)
-            "lt" Less than
-            "le" Less than or equal to
-            "gt" Greater than
-            "ge" Greater than or equal to
-
-  Example (no quotes on keys, only for sake of example):
-
-  ```javascript
-    [
-      {n: "location", o: "a", v: ["a-location-name"]},
-      {n: "serial", v: ["Q53"]},
-      {n: "loc"},
-      {n: "cond", v: ["failing", "servicing"], x: "no"},
-      {n: "sku"}
-    ]
-  ```
-
-  ## Search Schema
-
-  Concurrently, a column scheme is defined on the backend code, which is used by
-  prep_filters. The schema defines how to parse the filters, and enriches a filter
-  struct to be used to build the query.
-
-  The scheme is key/value map, where the key (atom) matches the name specified in
-  the filter (`n:` attribute). The value is a dict specification:
-
-      type: {type}   — see below for built-in types. You can add custom types by
-                       also defining prep and order.
-      list:          - (default: false), may also be :in, in which case the value
-                       must be a list and 'x in y' is used as the query.
-      key: :atom     — the key used to reference the data on the model. Used only
-                       when it does not match the scheme's parent key.
-    {xx-name: <auto>   - auto generates to match the scheme filter key, unless changed}
-      join: &func/3  — function to call to build a join if defaults are not wanted
-       (or) {key, &func/3} — join function like above, but stored into an alt key
-                       on the filter (when two diff filters will alter the same
-                       order, like `:vlan` and `:vlan_id` — the latter can specify
-                       that it is just `:vlan` order).
-      prep: &func/*  - additional preparing of an arg/value beyond the built-ins,
-                       supporting arity 1, 2, and 3.
-      order: false   — if false, do not include in ordering (default: true)
-      order: :only   — if `:only` only use it for order, not anything else
-        (or) &func/4 — if it is a function, call that to generate the order value
-
-  ## Input Validation
-
-  Input validation happens in two cycles. The scheme type can provide a function
-  hook for doing complex input validation & handling, or it can use a built-in type.
-  The built-in types are very simple. For complex things, use the hooked typing.
-
-  Built-in types:
-
-     :string   - just take it verbatim as a string
-     :glob     - trim & wrap it in % # todo: strip out dangerous things?
-     :uuid     - match uuid pattern
-     :atom     - turn it into an existing atom (not bespoke atom)
-     :integer  — turn it into an integer
-     :float    — turn it into a float
-     :date     — turn it into a datetime
-
-  ## GraphQL schema
-
-  Schema for GraphQL should include:
-
-  ```elixir
-  enum :filter_order do
-    value(:a)
-    value(:d)
-  end
-
-  enum :filter_operator do
-    value(:is)
-    value(:no)
-    value(:lt)
-    value(:le)
-    value(:gt)
-    value(:ge)
-  end
-
-  input_object :filter_column do
-    field(:n, non_null(:string))
-    field(:v, list_of(:string))
-    field(:o, :filter_order)
-    field(:x, :filter_operator, default_value: :is)
-  end
-  ```
-
-  then it can be used simply as:
-
-  ```elixir
-    arg(:filter, list_of(:filter_column), default_value: [])
-  ```
   """
 
   alias Rivet.Search.Filter
 
+  @type record_id() :: Ecto.UUID.t() | integer()
+
+  @typedoc "See [Search Filters](README.md#search-filters)."
   @type search_filter :: %{
           required(:n) => String.t(),
           required(:o) => :asc | :desc,
           required(:x) => atom(),
           required(:v) => term()
         }
+
+  @typedoc "See [Search Filters](README.md#search-filters)."
   @type search_filters :: list(search_filter())
+
+  @typedoc "See [Defining the Schema](README.md#defining-the-schema)."
   @type search_module :: module()
 
-  @type user_args :: map()
-  @type runtime_opts :: map()
+  @typedoc """
+
+  Inputs from the user sent into the search query. One of `:filter` or `:id` is required. Additional arguments may include `:limit`, `:offset` and others as used by the callback functions.
+
+  """
+  @type user_args :: %{
+          optional(:filter) => map(),
+          optional(:id) => record_id(),
+          optional(atom()) => term()
+        }
+
+  @typedoc """
+
+  Runtime options passed to the `c:search/2` function by the calling code.
+
+  Options may be supplied as a keyword list or map, but are internally represented as a map. Additional keys may be included for use by custom callbacks. Supported options:
+
+  * `:matching` — Count records matching the search filters before pagination (default: `true`).
+  * `:total` — Count all records in the underlying table, regardless of filters (default: `false`).
+  * `:hard_limit` — Override the compile-time `hard_limit` for the result set query limit.
+  * `:soft_limit` — Override the compile-time `soft_limit` for the result set query limit.
+
+  """
+  @type runtime_opts :: %{
+          optional(:matching) => true | false,
+          optional(:total) => false | true,
+          optional(:hard_limit) => integer(),
+          optional(:soft_limit) => integer(),
+          optional(atom()) => term()
+        }
+
   @type query_result :: {:ok, Ecto.Query.t()} | {:error, term()}
   @type filter_result :: {:ok, Ecto.Query.dynamic_expr()} | :skip | {:error, term()}
-  @type status_map :: %{
-          required(:success) => boolean(),
-          optional(:message) => String.t() | nil,
-          optional(:total) => non_neg_integer() | nil,
-          optional(:matching) => non_neg_integer() | nil,
-          optional(:search_id) => String.t() | nil,
-          optional(atom()) => term()
-        }
-
-  @type status_result :: %{
-          required(:success) => boolean(),
-          required(:status) => status_map(),
-          optional(:result) => term(),
-          optional(:results) => list(),
-          optional(atom()) => term()
-        }
 
   @type search_error :: {:error, atom() | String.t()}
-  @type search_result :: {:ok, status_result()} | search_error()
-  @type search_opts :: keyword() | map()
-
-  @callback search(user_args(), search_opts()) :: search_result()
+  @type search_result :: {:ok, Rivet.Search.Result.status_result()} | search_error()
 
   @doc """
 
-  Builds a WHERE expression for a prepared search column.
+  Primary entry point for external applications to execute a search.
 
-  NOTE: Rivet.Search adds a default filter_expr that returns an error, so if
-  you do not want to define one you can leave it out.
+  This callback may be overridden to customize search behavior. See also `m:Rivet.Search.MixedAuth`.
 
   """
-  @callback filter_expr(column :: atom(), search_filter(), Rivet.Search.t()) :: filter_result()
+  @callback search(user_args(), search_opts :: keyword() | map()) :: search_result()
+
+  @doc """
+
+  Called for each column while building the WHERE expression for the search the query.
+
+  A default implementation handles unmatched columns by returning an error. Custom implementations may return `:skip` to exclude a filter from the resulting expression.
+
+  Examples:
+
+  ```elixir
+  def filter_expr(:name, %{x: :is, v: v}, _) when not_empty_str(v),
+    do: {:ok, dynamic([challenge: x], ilike(x.name, ^v) or ilike(x.explain, ^v))}
+
+  def filter_expr(:name, %{x: :no, v: v}, _) when not_empty_str(v),
+    do: {:ok, dynamic([challenge: x], not ilike(x.name, ^v) and not ilike(x.explain, ^v))}
+  ```
+
+  """
+  @callback filter_expr(
+              column_name :: atom(),
+              filter_scheme :: search_filter(),
+              filter_state :: Rivet.Search.t()
+            ) :: filter_result()
 
   @doc "Creates the initial Ecto query before search filters are applied."
   @callback base_query(runtime_opts()) :: {:ok, Ecto.Query.t()} | {:error, term()}
 
-  @doc "Applies application-specific modifications to an enriched search query."
+  @doc """
+
+  Builds the search query by processing filters, joins, and other built-in behaviors.
+
+  May be overridden to extend or customize query construction beyond the built-in functionality provided by `c:filter_expr/3` and automatic joins.
+
+  """
   @callback build_filter_query(search_filters(), runtime_opts()) :: query_result()
 
   @optional_callbacks search: 2, base_query: 1, build_filter_query: 2
@@ -248,7 +145,7 @@ defmodule Rivet.Search do
 
       import Ecto.Query
       alias Rivet.Search.{Tools, Filter, Result}
-      alias Rivet.Search.Tools.MixedAuth
+      alias Rivet.Search.MixedAuth
 
       @doc """
       Search module configuration values
@@ -259,9 +156,6 @@ defmodule Rivet.Search do
       def get_hard_limit(), do: @search_hard_limit
       def get_model(), do: @search_model
 
-      @doc """
-      See search/README.md
-      """
       def search(filters, opts \\ nil), do: Rivet.Search.search(__MODULE__, filters, opts)
 
       defoverridable search: 2
@@ -353,7 +247,7 @@ defmodule Rivet.Search do
     end
   end
 
-  defp search_(searcher, %{id}, _opts) when is_uuid(id),
+  defp search_(searcher, %{id}, _opts) when is_uuid(id) or is_integer(id),
     do: searcher.get_model().one(id: id) |> Rivet.Search.Result.status_results()
 
   defp search_(_, _, _), do: {:error, :args}

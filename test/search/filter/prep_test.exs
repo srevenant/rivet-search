@@ -1,5 +1,5 @@
 defmodule Rivet.Search.Test.Search.Filter.PrepTest do
-  use Rivet.Test.Case, async: true
+  use Rivet.Search.Test.Case, async: true
 
   defmodule TestSearch do
     def no_join(a, _, _), do: a
@@ -86,38 +86,37 @@ defmodule Rivet.Search.Test.Search.Filter.PrepTest do
       %{n: "vp3", v: ["beta"]}
     ]
 
-    assert {:ok,
-            %Rivet.Search{
-              order: [
-                {:desc, :a},
-                {:asc, :d1},
-                {:asc, :d2},
-                {:asc, :f},
-                {:desc, :gx},
-                {:desc, :i, :ix},
-                {:asc, :o},
-                {:asc, :s},
-                {:asc, :u},
-                {:asc, :no_value},
-                {:asc, :no_value_list},
-                {:desc, :alt_name, :named_join}
-              ],
-              values:
-                %{
-                  a: %{v: [:no_value]},
-                  d1: %{v: d1},
-                  d2: %{v: ~U[2025-05-08 17:34:15.113668Z]},
-                  f: %{v: 30.0, x: :is, n: "f", o: :asc},
-                  g: %{v: "%bork\\%%", x: :is, n: "g", o: :desc},
-                  i: %{v: 10, x: :is, n: "i", o: :desc},
-                  s: %{v: "narf", x: :no, n: "s", o: :asc},
-                  u: %{v: ^uuid, x: :is, n: "u", o: :asc},
-                  no_value: %{v: [:no_value]},
-                  no_value_list: %{v: [:no_value]},
-                  vp2: %{v: "vp2:alpha"},
-                  vp3: %{v: "bork:vp3:beta"}
-                } = values
-            }} = TestSearch.test(filters, %{prefix: "bork"})
+    assert {:ok, %Rivet.Search{order, values}} = TestSearch.test(filters, %{prefix: "bork"})
+
+    assert [
+             {:desc, :a},
+             {:asc, :d1},
+             {:asc, :d2},
+             {:asc, :f},
+             {:desc, :gx},
+             {:desc, :i, :ix},
+             {:asc, :o},
+             {:asc, :s},
+             {:asc, :u},
+             {:asc, :no_value},
+             {:asc, :no_value_list},
+             {:desc, :alt_name, :named_join}
+           ] == order
+
+    assert %{
+             a: %{v: [:no_value], x: :is, n: "a", o: :desc},
+             d1: %{v: d1},
+             d2: %{v: ~U[2025-05-08 17:34:15.113668Z]},
+             f: %{v: 30.0, x: :is, n: "f", o: :asc},
+             g: %{v: "%bork\\%%", x: :is, n: "g", o: :desc},
+             i: %{v: 10, x: :is, n: "i", o: :desc},
+             s: %{v: "narf", x: :no, n: "s", o: :asc},
+             u: %{v: ^uuid, x: :is, n: "u", o: :asc},
+             no_value: %{v: [:no_value]},
+             no_value_list: %{v: [:no_value]},
+             vp2: %{v: "vp2:alpha"},
+             vp3: %{v: "bork:vp3:beta"}
+           } = values
 
     assert DateTime.compare(d1, start) in [:eq, :gt]
     assert DateTime.compare(d1, DateTime.utc_now()) in [:eq, :lt]

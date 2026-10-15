@@ -1,5 +1,5 @@
 defmodule Rivet.Search.Test.Search.TestTableTest do
-  use Rivet.Test.Case, async: true
+  use Rivet.Search.Test.Case, async: true
   alias Rivet.TestTable.Search
 
   test "build_query" do

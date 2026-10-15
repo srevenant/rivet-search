@@ -1,5 +1,5 @@
 defmodule Rivet.Search.Test.Search.ToolsTest do
-  use Rivet.Test.Case, async: true
+  use Rivet.Search.Test.Case, async: true
   import Ecto.Query
   alias Rivet.Search.Tools
   alias Rivet.TestTable

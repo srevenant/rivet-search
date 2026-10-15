@@ -1,5 +1,5 @@
 defmodule Rivet.Search.Test.Search.ValidateTest do
-  use Rivet.Test.Case, async: true
+  use Rivet.Search.Test.Case, async: true
   alias Rivet.Search.Validate
 
   def bogun_join3(a, _, _), do: {:ok, a}

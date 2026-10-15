@@ -182,12 +182,14 @@ defmodule Rivet.Search.Filter.Prep do
 
   defp validate_type_value(:no_value, _, _), do: {:ok, :no_value}
 
+  @max_glob 128
   defp validate_type_value(value, %{type: :glob}, _) do
     value =
       String.trim(value)
       |> String.replace("\\", "\\\\")
       |> String.replace("%", "\\%")
       |> String.replace("_", "\\_")
+      |> String.slice(0..@max_glob//1)
 
     {:ok, "%#{value}%"}
   end

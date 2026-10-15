@@ -1,22 +1,68 @@
 defmodule Rivet.Search.Result do
   @moduledoc """
 
-  Normalizes search results into Rivet-GraphQL status responses.
-
-  Supports both legacy nested `status` and newer top-level `success` fields
-  during the transition. Please stick with only one graphql result shape.
+  Supports both legacy nested `status` and newer top-level `success` fields during the transition. Please stick with only one graphql result shape.
 
   Authentication errors are returned directly rather than wrapped.
 
   """
 
+  @typedoc """
+
+  Metadata describing the outcome of a search, contained within a `t:status_result/0`. Possible fields:
+
+  * `:success` — (required) Indicates whether the query succeeded or failed.
+  * `:total` — (success) Total records in the underlying table, regardless of filters. Only included when enabled in `t:runtime_opts/0`.
+  * `:matching` — (success) Records matching the query before limits and pagination. This may exceed the number of records returned. Only included when enabled in `t:runtime_opts/0`.
+  * `:search_id` — (success) Identifier used to maintain state across paginated searches. See `Rivet.Search.Pagination`.
+  * `:message` — (failure) User-facing message describing the failure.
+
+  """
+  @type status_map :: %{
+          required(:success) => boolean(),
+          optional(:message) => String.t() | nil,
+          optional(:total) => non_neg_integer() | nil,
+          optional(:matching) => non_neg_integer() | nil,
+          optional(:search_id) => String.t() | nil,
+          optional(atom()) => term()
+        }
+
+  @typedoc """
+
+  Standard response structure for search operations, designed for use with GraphQL and other APIs.
+
+  The `:status` field is always present and contains a `t:status_map/0` describing the outcome of the operation.
+
+  Successful operations may include:
+
+  * `:results` — A list of records returned by the search.
+  * `:result` — A single record or value, typically from a direct lookup.
+
+  Additional fields may be included depending on the operation.
+
+  """
+  @type status_result :: %{
+          required(:status) => status_map(),
+          optional(:result) => term(),
+          optional(:results) => list(),
+          optional(atom()) => term()
+        }
+
   @doc """
+
+  Doc Tests:
+
+  ```elixir
   iex> assert true = has_status?(%{success: 1})
+  ```
   """
   defguard has_status?(x) when is_map_key(x, :status) or is_map_key(x, :success)
 
   @doc """
-  ```
+
+  Doc Tests:
+
+  ```elixir
   iex> status_result({:error, "Unauthenticated"})
   {:error, "Unauthenticated"}
 
@@ -30,8 +76,8 @@ defmodule Rivet.Search.Result do
   iex> status_result({:ok, "narf"})
   {:ok, %{status: %{success: true}, result: "narf", success: true}}
   ```
+
   """
-  @type status_result :: {:ok, map()} | {:error, term()}
 
   @spec status_result({:ok, term()} | {:error, term()}) :: status_result()
 
@@ -45,7 +91,9 @@ defmodule Rivet.Search.Result do
 
   Do not bother checking if has_status? already though, as it should be the top
 
-  ```
+  Doc Tests:
+
+  ```elixir
   iex> status_result({:ok, :narf}, %{boop: "boop"})
   {:ok, %{status: %{success: true, boop: "boop"}, result: :narf, boop: "boop", success: true}}
   iex> status_result({:error, "narf"}, nil)
@@ -56,7 +104,10 @@ defmodule Rivet.Search.Result do
   def status_result({:error, error}, _), do: build_error(error)
 
   @doc """
-  ```
+
+  Doc Tests:
+
+  ```elixir
   iex> status_results({:ok, %{status: %{success: true}, results: [:a, :b]}})
   {:ok, %{status: %{success: true}, results: [:a, :b]}}
   iex> status_results({:ok, [:a, :b]})
@@ -79,7 +130,9 @@ defmodule Rivet.Search.Result do
 
   Do not bother checking if has_status? already though, as it should be the top
 
-  ```
+  Doc Tests:
+
+  ```elixir
   iex> status_results({:ok, [:a]}, %{matching: 1})
   {:ok, %{results: [:a], status: %{matching: 1, success: true}, matching: 1, success: true}}
   iex> status_results({:ok, :a}, %{matching: 1})

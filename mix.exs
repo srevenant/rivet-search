@@ -24,7 +24,6 @@ defmodule Rivet.Search.MixProject do
         plt_file: {:no_warn, "priv/plts/dialyzer.plt"}
       ],
       elixirc_paths: elixirc_paths(Mix.env()),
-      # xref: [exclude: List.wrap(Application.get_env(:rivet, :repo))],
       aliases: aliases(),
       compilers: [:es6_maps | Mix.compilers()]
     ]
@@ -84,11 +83,12 @@ defmodule Rivet.Search.MixProject do
   defp docs() do
     [
       main: "Rivet.Search",
+      extras: ["README.md"],
       groups_for_modules: [
-        "Base": [Rivet.Search, Rivet.Search.Result, Rivet.Search.Tools],
-        "Authenticated": [Rivet.Search.MixedAuth],
-        "Future": [Rivet.Search.Pagination],
-        "Internals": [~r/^Rivet\.Search\.Filter/, Rivet.Search.Validate]
+        Base: [Rivet.Search, Rivet.Search.Result, Rivet.Search.Tools],
+        Authenticated: [Rivet.Search.MixedAuth],
+        Future: [Rivet.Search.Pagination],
+        Internals: [~r/^Rivet\.Search\.Filter/, Rivet.Search.Validate]
       ]
     ]
   end

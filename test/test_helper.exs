@@ -1,5 +1,5 @@
 ExUnit.start(capture_log: true)
 
-Supervisor.start_link([Rivet.Test.Repo], strategy: :one_for_one)
+Supervisor.start_link([Rivet.Search.Test.Repo], strategy: :one_for_one)
 
-Ecto.Adapters.SQL.Sandbox.mode(Rivet.Test.Repo, :manual)
+Ecto.Adapters.SQL.Sandbox.mode(Rivet.Search.Test.Repo, :manual)
