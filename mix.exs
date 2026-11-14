@@ -67,7 +67,8 @@ defmodule Rivet.Search.MixProject do
       {:ex_machina, "~> 2.8", only: [:dev, :test]},
       {:excoveralls, "~> 0.18", only: [:dev, :test], runtime: false},
       {:mix_test_watch, "~> 1.4", only: [:dev, :test], runtime: false},
-      {:rivet, "~> 3.0.0-rc.2"}
+      # {:rivet, "~> 3.0.0-rc.2"}
+      {:rivet, env: :prod, git: "https://github.com/srevenant/rivet/", branch: "mailer-updates"}
     ]
   end
 
