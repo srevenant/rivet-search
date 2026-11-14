@@ -74,9 +74,16 @@ defmodule Rivet.Search.Tools do
   def prep_enum_mine(a, b, c), do: prep_enum(a, b, c)
 
   def prep_enum(value, _scheme, enum) do
-    with :error <- enum.cast(value) do
-      mod = Rivet.Utils.Module.mod_basename(enum) |> inspect()
-      {:error, "Invalid #{mod}: '#{value}'"}
+    # the contract shape has changed over time
+    case enum.cast(value) do
+      :error -> enum_error(value, enum, nil)
+      {:error, e} -> enum_error(value, enum, e)
+      pass -> pass
     end
+  end
+
+  def enum_error(value, enum, _error) do
+    mod = inspect(Rivet.Utils.Module.mod_basename(enum))
+    {:error, "Invalid #{mod}: '#{value}'"}
   end
 end
