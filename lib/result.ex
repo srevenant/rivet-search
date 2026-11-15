@@ -53,16 +53,6 @@ defmodule Rivet.Search.Result do
   Doc Tests:
 
   ```elixir
-  iex> assert true = has_status?(%{success: 1})
-  ```
-  """
-  defguard has_status?(x) when is_map_key(x, :status) or is_map_key(x, :success)
-
-  @doc """
-
-  Doc Tests:
-
-  ```elixir
   iex> status_result({:error, "Unauthenticated"})
   {:error, "Unauthenticated"}
 
@@ -81,15 +71,14 @@ defmodule Rivet.Search.Result do
 
   @spec status_result({:ok, term()} | {:error, term()}) :: status_result()
 
-  def status_result({:ok, result} = pass) when has_status?(result), do: pass
+  # if an external thing is setting this, just let it through
+  def status_result({:ok, %{status: %{success: _}}} = pass), do: pass
   def status_result({:ok, result}), do: build_success(%{result})
   def status_result({:error, error}), do: build_error(error)
 
   @doc """
 
   Two arguments is providing additional status params (total, matching, etc)
-
-  Do not bother checking if has_status? already though, as it should be the top
 
   Doc Tests:
 
@@ -100,6 +89,8 @@ defmodule Rivet.Search.Result do
   {:ok, %{status: %{success: false, message: "narf"}, reason: "narf", success: false}}
   ```
   """
+  # Don't do the bypass here as w/two args we should know what content we're getting
+  # def status_result({:ok, %{status: %{success: _}}}, _) = pass, do: pass
   def status_result({:ok, result}, p), do: build_success(%{result}, p)
   def status_result({:error, error}, _), do: build_error(error)
 
@@ -119,7 +110,8 @@ defmodule Rivet.Search.Result do
   ```
   """
   @spec status_results({:ok, term()} | {:error, term()}) :: {:ok, map()} | {:error, term()}
-  def status_results({:ok, result} = pass) when has_status?(result), do: pass
+  # if an external thing is setting this, just let it through
+  def status_results({:ok, %{status: %{success: _}}} = pass), do: pass
   def status_results({:ok, results}) when is_list(results), do: build_success(%{results})
   def status_results({:ok, result}), do: build_success(%{results: [result]})
   def status_results({:error, error}), do: build_error(error)
@@ -127,8 +119,6 @@ defmodule Rivet.Search.Result do
   @doc """
 
   Two arguments is providing additional status params (total, matching, etc)
-
-  Do not bother checking if has_status? already though, as it should be the top
 
   Doc Tests:
 
@@ -141,7 +131,8 @@ defmodule Rivet.Search.Result do
   {:ok, %{status: %{success: false, message: "boop"}, reason: "boop", success: false}}
   ```
   """
-
+  # Don't do the bypass here as w/two args we should know what content we're getting
+  # def status_results({:ok, %{status: %{success: _}}} = pass, _), do: pass
   def status_results({:ok, results}, p) when is_list(results), do: build_success(%{results}, p)
   def status_results({:ok, result}, p), do: build_success(%{results: [result]}, p)
   def status_results({:error, error}, _), do: build_error(error)
