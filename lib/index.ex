@@ -226,6 +226,7 @@ defmodule Rivet.Search do
 
   ############
   defp search_(searcher, %{filter} = user_args, opts) when is_list(filter) do
+    opts = Map.merge(user_args, opts)
     case searcher.build_filter_query(filter, opts) do
       {:ok, %Ecto.Query{} = query} ->
         model = searcher.get_model()
